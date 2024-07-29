@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package api.review.v1;
+
+import "google/api/annotations.proto";
+import "validate/validate.proto";
+import "errors/errors.proto";
+
+option go_package = "review-service/api/review/v1;v1";
+option java_multiple_files = true;
+option java_package = "api.review.v1";
+
+// 定义评价服务
+service Review {
+	// 创建评价
+	rpc CreateReview (CreateReviewRequest) returns (CreateReviewReply){
+		option (google.api.http) = {
+			post: "/v1/review",
+			body: "*"
+		};
+	};
+	rpc UpdateReview (UpdateReviewRequest) returns (UpdateReviewReply);
+	rpc DeleteReview (DeleteReviewRequest) returns (DeleteReviewReply);
+	rpc GetReview (GetReviewRequest) returns (GetReviewReply);
+	rpc ListReview (ListReviewRequest) returns (ListReviewReply);
+	// b端回复评价
+	rpc ReplyReview (ReplyReviewRequest)returns(ReplyReviewReply){
+		option (google.api.http) = {
+			post: "/v1/review/*id",
+			body: "*"
+		};
+	};
+}
+
+// 创建评价的参数
+message CreateReviewRequest {
+	int64 userID = 1 [(validate.rules).int64 = {gt:0}];
+	int64 orderID = 2 [(validate.rules).int64 = {gt:0}];
+	int32 score = 3 [(validate.rules).int32 = {gt:0,lte:5}];
+	int32 serviceScore = 4 [(validate.rules).int32 = {gt:0,lte:5}];
+	int32 expressScore = 5 [(validate.rules).int32 = {gt:0,lte:5}];
+	string content = 6 [(validate.rules).string = {min_len:8,max_len:255}];
+	string picInfo = 7;
+	string videoInfo = 8;
+	bool anonymous = 9;
+}
+// 创建评价的回复
+message CreateReviewReply {
+	int64 reviewID = 1;
+}
+
+message UpdateReviewRequest {}
+message UpdateReviewReply {}
+
+message DeleteReviewRequest {}
+message DeleteReviewReply {}
+
+message GetReviewRequest {}
+message GetReviewReply {}
+
+message ListReviewRequest {}
+message ListReviewReply {}
+
+message ReplyReviewRequest{
+	int64 reviewID = 1[(validate.rules).int64 = {gt: 0}];
+	int64 storeID = 2 [(validate.rules).int64 = {gt: 0}];
+	string content = 3 [(validate.rules).string = {min_len:8,max_len:255}];
+	string picInfo = 4;
+	string videoInfo = 5;
+}
+message ReplyReviewReply{
+	int64 replyID = 1;
+}
+
+
+enum ErrorReason {
+	// 设置缺省错误码
+	option (errors.default_code) = 500;
+
+	// 为某个枚举单独设置错误码
+	NEED_LOGIN = 0 [(errors.code) = 401];
+	DB_FAILED = 1 [(errors.code) = 500];
+	ORDER_REVIEWED = 100 [(errors.code) = 400];
+}
